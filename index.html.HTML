@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Forex Confluence Desk</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f1f4f7;--sf:#fff;--ln:#d5dde5;--tx:#17222d;--mu:#5d7083;--up:#0a7f96;--dn:#c2570c;--ac:#2b5fd9;--wn:#9a6b00;--gr:#e8edf2}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1620;--sf:#15202c;--ln:#263545;--tx:#dbe5ee;--mu:#8194a6;--up:#4cc3d9;--dn:#f2994a;--ac:#7a9bff;--wn:#e3b341;--gr:#1d2b3a}}
+:root[data-theme=dark]{--bg:#0e1620;--sf:#15202c;--ln:#263545;--tx:#dbe5ee;--mu:#8194a6;--up:#4cc3d9;--dn:#f2994a;--ac:#7a9bff;--wn:#e3b341;--gr:#1d2b3a}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.num,td.n{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
+header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--ln)}
+h1{font-size:18px;margin:0}h2{font-size:14px;margin:0 0 8px}
+.badge{padding:3px 9px;border:1px solid var(--wn);color:var(--wn);border-radius:99px;font-size:12px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px;align-items:center}
+select,input,textarea,button{font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:6px;padding:6px 9px}
+button{cursor:pointer;background:var(--ac);color:#fff;border-color:var(--ac)}button.g{background:var(--sf);color:var(--tx);border-color:var(--ln)}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.grid,.g2{display:grid;gap:12px;padding:0 16px 12px}.grid{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:8px;padding:12px;min-width:0}
+.tg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--mu);margin-bottom:6px}.tg label{display:flex;gap:4px;align-items:center}
+canvas{width:100%;height:420px;display:block}@media(max-width:600px){canvas{height:320px}}
+.v{font-size:22px;font-weight:700;padding:10px;border-radius:6px;border:2px solid;text-align:center;margin-bottom:8px}
+.v.L{color:var(--up);border-color:var(--up)}.v.S{color:var(--dn);border-color:var(--dn);border-style:dashed}.v.W{color:var(--mu);border-color:var(--mu);border-style:dotted}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:4px 6px;border-bottom:1px solid var(--ln);text-align:left;vertical-align:top}
+.sc{overflow-x:auto}.up{color:var(--up)}.dn{color:var(--dn)}.mu{color:var(--mu)}
+.warn{border-left:3px solid var(--wn);padding:3px 8px;margin:4px 0;background:var(--gr);font-size:13px}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);align-items:center;justify-content:center;z-index:1000;padding:16px}
+.modal-card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:20px;max-width:440px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.modal-card h2{margin-top:0}
+.modal-card button{width:100%;margin-top:12px;padding:10px;font-size:14px}
+ul{margin:4px 0;padding-left:18px}.f{display:grid;grid-template-columns:auto 1fr;gap:2px 8px}.in{display:grid;grid-template-columns:1fr 1fr;gap:6px}.in label{display:grid;gap:2px;font-size:12px;color:var(--mu)}
+small{color:var(--mu)}textarea{width:100%;min-height:70px}
+</style></head><body>
+<div id="riskModal" class="modal-backdrop" style="display:none" role="dialog" aria-modal="true" aria-labelledby="riskModalTitle">
+<div class="modal-card">
+<h2 id="riskModalTitle">Before you start</h2>
+<p>This tool provides <b>technical analysis only</b>. It is not financial advice, and it does not predict markets, guarantee profits, or eliminate risk.</p>
+<p>Every LONG/SHORT candidate is a count of agreeing technical factors, not a probability of success — and can still be wrong.</p>
+<p><b>Most retail forex traders lose money.</b> Never risk more than you can afford to lose, and confirm every trade against your own judgment and risk limits.</p>
+<button id="riskAckBtn">I understand — continue</button>
+</div></div>
+<header><h1>Forex confluence desk</h1><span id="badge" class="badge"></span></header>
+<div class="bar">
+<select id="pair" aria-label="Pair"></select><select id="tf" aria-label="Entry timeframe"></select>
+<button id="go">Analyze</button><button id="reseed" class="g">New simulated run</button>
+<span class="mu" id="stamp"></span></div>
+<main>
+<div class="grid">
+<section class="card"><div class="tg">
+<label><input type="checkbox" id="oE" checked>EMA 20/50/200</label><label><input type="checkbox" id="oB">Bollinger</label>
+<label><input type="checkbox" id="oS" checked>Support/resistance</label><label><input type="checkbox" id="oM" checked>Structure</label>
+<label><input type="checkbox" id="oF" checked>Zones &amp; FVG</label>
+<label>Bars <select id="bars"><option>60</option><option selected>110</option><option>200</option></select></label></div>
+<canvas id="chart" role="img" aria-label="Candlestick chart with overlays"></canvas>
+<small>Hollow candle = up, filled = down. EMA20 solid, EMA50 dashed, EMA200 dotted.</small></section>
+<aside class="card" id="decision"><h2>Decision</h2><p class="mu">Press Analyze.</p></aside></div>
+
+<div class="g2">
+<section class="card"><h2>Multi-timeframe</h2><div class="sc" id="mtf"></div></section>
+<section class="card"><h2>Why this result</h2><div id="why"></div></section>
+<section class="card"><h2>Scenarios and invalidation</h2><div id="scen"></div></section>
+<section class="card"><h2>Risk calculator</h2><div class="in" id="rk">
+<label>Account balance<input id="bal" type="number" value="10000" min="1"></label>
+<label>Max risk % (cap 5)<input id="rp" type="number" value="1" step="0.25" min="0.1"></label>
+<label>Stop-loss (pips)<input id="slp" type="number" value="20" min="1"></label>
+<label>Pip value / std lot ($)<input id="pv" type="number" value="10" step="0.1"></label>
+<label>Leverage (1:x)<input id="lev" type="number" value="30" min="1"></label></div><div id="rout"></div></section>
+<section class="card"><h2>News and calendar</h2>
+<div id="newsStat" class="warn">No events entered. News risk shows as unknown.</div>
+<small>Paste upcoming high-impact events, one per line: <code>time,currency,event,impact</code> — impact is H/M/L. Times in the page's local timezone. Example: <code>2026-09-30T12:30,USD,Non-Farm Payrolls,H</code></small>
+<textarea id="newsIn" placeholder="2026-09-30T12:30,USD,Non-Farm Payrolls,H"></textarea>
+<button id="newsSave" class="g">Save events</button>
+<div id="newsList" class="sc"></div>
+<small class="mu">You type these in yourself (e.g. from a calendar site) — nothing here is fetched or invented automatically. A connected calendar MCP connector is a possible future upgrade once one is linked.</small></section>
+<section class="card"><h2>Chart screenshot cross-check</h2>
+<div id="ssGate" class="warn">Checking whether this view can analyze images…</div>
+<div id="ssBody" hidden>
+<input type="file" id="ssFile" accept="image/png,image/jpeg,image/webp">
+<button id="ssGo" class="g">Analyze screenshot</button>
+<div id="ssPrev"></div><div id="ssOut"></div>
+<small class="mu">Sent to Claude for a visual read only; it does not see your account or place trades. Compared against the computed confluence score, not treated as a signal on its own.</small>
+</div></section>
+<section class="card"><h2>Backtest (entry timeframe)</h2><button id="bt" class="g">Run backtest</button><div id="btout" class="sc"></div></section>
+<section class="card"><h2>Data source</h2>
+<label><input type="checkbox" id="liveToggle" disabled> Use live Twelve Data prices</label>
+<div id="liveStat" class="warn">Checking for a connected live-data tool…</div>
+<div class="tg"><label>Import as <select id="csvTf"></select></label><label><input type="checkbox" id="csvBulk"> Bulk paste (multiple timeframes)</label></div>
+<small id="csvHelp">One candle per line: <code>time,open,high,low,close</code>. Manual imports always win over live data for that timeframe.</small>
+<textarea id="csv" placeholder="2026-09-24T10:00:00Z,1.0850,1.0860,1.0842,1.0855"></textarea>
+<button id="lc" class="g">Load CSV</button> <button id="ud" class="g">Clear imports / use simulated data</button>
+<div id="csvStat" class="sc"></div>
+<small class="mu">Per-timeframe source (live / imported / simulated) is shown in the Multi-timeframe table below.</small></section>
+<section class="card"><h2>Trade journal</h2><textarea id="jn" placeholder="What did you see? Why did you take or skip it?"></textarea><button id="js" class="g">Save entry</button><div id="jl"></div></section>
+<section class="card"><h2>Analysis history</h2><div id="hl" class="sc"></div></section>
+</div>
+<p style="padding:0 16px 24px" class="mu"><small>Educational analysis tool, not financial advice. Confluence is not probability, and past or simulated performance does not predict future results. Most retail forex traders lose money.</small></p>
+</main>
+<script>
+"use strict";
+/* ============ STATE / HELPERS ============ */
+const $=s=>document.querySelector(s),TFS=['1m','5m','15m','1h','4h','1d'],MIN={'1m':1,'5m':5,'15m':15,'1h':60,'4h':240,'1d':1440};
+const PAIRS={EURUSD:1.085,GBPUSD:1.27,USDJPY:150,AUDUSD:.66,USDCAD:1.36,USDCHF:.88,NZDUSD:.61,EURJPY:162,GBPJPY:190,EURGBP:.855};
+const st={pair:'EURUSD',tf:'15m',seed:1,manual:{},all:{},a:null,res:null,stamp:null,sample:null,news:[],mcp:null,live:false,src:{},liveErr:{}};
+const TF2IV={'1m':'1min','5m':'5min','15m':'15min','1h':'1h','4h':'4h','1d':'1day'};
+const tdSymbol=p=>p.slice(0,3)+'/'+p.slice(3,6);
+function mcpErrMsg(e){const m={needs_reauth:'Reconnect Twelve Data in Settings \u2192 Connectors.',server_not_connected:'Add Twelve Data in Settings \u2192 Connectors.',
+ selection_required:'Choose which Twelve Data connector to use, in Settings \u2192 Connectors.',not_in_manifest:'This page isn\u2019t allowed to call Twelve Data for you right now.',
+ blocked_by_policy:'Your organization blocks this tool.',approval_required:'This call needs org approval first.',consent_required:'Allow Twelve Data when prompted, then try again.',
+ rate_limited:'Twelve Data rate limit hit \u2014 wait a moment and retry.',server_unavailable:'Twelve Data is temporarily unavailable.',selection:'',
+ tool_error:'Twelve Data reported an error'+(e.message?': '+e.message:'.'),cancelled:'Request cancelled.',server_not_found:'Twelve Data connector no longer found.'};
+ return m[e.code]||('Live data error ('+e.code+'): '+(e.message||''))}
+/* Parses Twelve Data's semicolon-delimited text payload (header row + data rows). */
+function parseTD(payload){let text=typeof payload==='string'?payload:(payload&&payload.text)?payload.text:JSON.stringify(payload||'');
+ const lines=text.trim().split(/\r?\n/);if(lines.length<2)return[];const hdr=lines[0].split(';').map(h=>h.trim().toLowerCase());
+ const di=hdr.indexOf('datetime'),oi=hdr.indexOf('open'),hi=hdr.indexOf('high'),li=hdr.indexOf('low'),ci=hdr.indexOf('close');
+ if([di,oi,hi,li,ci].some(x=>x<0))return[];const rows=[];
+ for(let i=1;i<lines.length;i++){const c=lines[i].split(';');if(c.length<hdr.length)continue;
+  const raw=c[di].trim(),iso=raw.includes('T')?raw:raw.replace(' ','T')+'Z',t=Date.parse(iso),o=+c[oi],h=+c[hi],l=+c[li],cl=+c[ci];
+  if(!isNaN(t)&&!isNaN(cl))rows.push({t,o,h,l,c:cl})}
+ return rows.sort((a,b)=>a.t-b.t)}
+const hasManual=()=>Object.keys(st.manual).length>0;
+const dec=()=>st.pair.includes('JPY')?3:5,f=v=>v==null?'–':v.toFixed(dec()),pipS=()=>st.pair.includes('JPY')?.01:.0001;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mem={},store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):(mem[k]||d)}catch(e){return mem[k]||d}},set(k,v){mem[k]=v;try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const sym=v=>v>0?'▲ Bullish':v<0?'▼ Bearish':'■ Neutral',cls=v=>v>0?'up':v<0?'dn':'mu';
+// Qualitative agreement band, replacing a bare "/100" score — a number that
+// visually mimics a win probability even with a disclaimer attached. This
+// counts agreeing factors, not statistical odds of success.
+function agreementBand(conf){return conf>=70?{label:'High agreement',cls:'up'}:conf>=45?{label:'Moderate agreement',cls:'mu'}:{label:'Low agreement',cls:'dn'}}
+
+/* ============ DATA ACQUISITION ============ */
+const Data={
+ demo(pair,tf,n=600){let h=0;for(const ch of pair+tf)h=(h*31+ch.charCodeAt(0))>>>0;let s=(h+st.seed*7919)>>>0;
+  const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296,m=MIN[tf],sig=PAIRS[pair]*.00035*Math.sqrt(m/15);
+  let p=PAIRS[pair]*(1+(r()-.5)*.02),drift=0,left=0;const now=Math.floor(Date.now()/(m*6e4))*m*6e4,out=[];
+  for(let i=0;i<n;i++){if(--left<=0){left=50+r()*110|0;drift=(r()-.5)*sig*.3}
+   const o=p;let hi=o,lo=o;for(let k=0;k<4;k++){p+=drift+(r()-.5)*sig*1.1;hi=Math.max(hi,p);lo=Math.min(lo,p)}
+   out.push({t:now-(n-1-i)*m*6e4,o,h:hi+r()*sig*.2,l:lo-r()*sig*.2,c:p})}return out},
+ parseCSV(txt){const o=[];for(const ln of txt.trim().split(/\r?\n/)){const c=ln.split(/[,;\t]/).map(x=>x.trim());if(c.length<5)continue;
+   const v=c.slice(1,5).map(Number);if(v.some(isNaN))continue;const t=isNaN(+c[0])?Date.parse(c[0]):+c[0];if(isNaN(t))continue;o.push({t,o:v[0],h:v[1],l:v[2],c:v[3]})}return o.sort((a,b)=>a.t-b.t)},
+ /* Bulk format: a line naming the timeframe, e.g. "#1h" or "== 1h ==" or "[1h]", starts a new
+    section; every candle line after it (until the next tf header) is loaded into that tf. */
+ parseBulk(txt){const secs={},hdr=/^[#=\[]*\s*(1m|5m|15m|1h|4h|1d)\s*[\]=:]*\s*$/i;let cur=null;
+  for(const ln of txt.split(/\r?\n/)){const t=ln.trim();if(!t)continue;const m=t.match(hdr);
+   if(m){cur=m[1].toLowerCase();secs[cur]=secs[cur]||[];continue}
+   if(!cur)continue;const c=t.split(/[,;\t]/).map(x=>x.trim());if(c.length<5)continue;
+   const v=c.slice(1,5).map(Number);if(v.some(isNaN))continue;const tt=isNaN(+c[0])?Date.parse(c[0]):+c[0];if(isNaN(tt))continue;
+   secs[cur].push({t:tt,o:v[0],h:v[1],l:v[2],c:v[3]})}
+  for(const k in secs)secs[k].sort((a,b)=>a.t-b.t);return secs},
+ async get(pair,tf){if(st.manual[tf]){st.src[tf]='csv';return st.manual[tf]}
+  if(st.live&&st.mcp){const rows=await Data.providers.twelveData(pair,tf);if(rows&&rows.length>=210){st.src[tf]='live';return rows}st.src[tf]='sim';return Data.demo(pair,tf)}
+  st.src[tf]='sim';return Data.demo(pair,tf)},
+ providers:{custom:null,
+  async twelveData(pair,tf){try{
+    const out=await st.mcp.callTool('Twelve Data','get_time_series',{symbol:tdSymbol(pair),interval:TF2IV[tf],outputsize:260},
+     {cache:{staleTime:tf==='1d'?300000:tf==='4h'?120000:tf==='1h'?60000:30000,gcTime:600000}});
+    const rows=parseTD(out.payload);if(rows.length<210)st.liveErr[tf]='Only '+rows.length+' live bars returned (need \u2265210).';
+    return rows}
+   catch(e){st.liveErr[tf]=mcpErrMsg(e);return null}}}};
+
+/* ============ INDICATORS ============ */
+const I={
+ ema(a,n){const k=2/(n+1);let e=a[0];return a.map((v,i)=>{if(i)e=v*k+e*(1-k);return e})},
+ rsi(c,n=14){let g=0,l=0;const o=Array(c.length).fill(null);for(let i=1;i<c.length;i++){const d=c[i]-c[i-1],u=Math.max(d,0),w=Math.max(-d,0);
+  if(i<=n){g+=u/n;l+=w/n}else{g=(g*(n-1)+u)/n;l=(l*(n-1)+w)/n}if(i>=n)o[i]=l?100-100/(1+g/l):100}return o},
+ macd(c){const a=I.ema(c,12),b=I.ema(c,26),m=a.map((v,i)=>v-b[i]),s=I.ema(m,9);return{m,s,h:m.map((v,i)=>v-s[i])}},
+ atrAdx(C,n=14){const L=C.length,atr=Array(L).fill(null),adx=Array(L).fill(null),dx=[];let a=0,P=0,M=0,ax=null;
+  for(let i=1;i<L;i++){const x=C[i],q=C[i-1],t=Math.max(x.h-x.l,Math.abs(x.h-q.c),Math.abs(x.l-q.c)),up=x.h-q.h,dn=q.l-x.l,p=up>dn&&up>0?up:0,m=dn>up&&dn>0?dn:0;
+   if(i<=n){a+=t;P+=p;M+=m;if(i<n)continue}else{a+=t-a/n;P+=p-P/n;M+=m-M/n}
+   atr[i]=a/n;const pi=100*P/a,mi=100*M/a,d=100*Math.abs(pi-mi)/((pi+mi)||1);dx.push(d);
+   if(dx.length===n)ax=dx.reduce((s,v)=>s+v)/n;else if(dx.length>n)ax=(ax*(n-1)+d)/n;if(ax!=null)adx[i]=ax}
+  return{atr,adx}},
+ bb(c,n=20){const mid=[],up=[],lo=[];c.forEach((_,i)=>{if(i<n-1){mid.push(null);up.push(null);lo.push(null);return}
+  const w=c.slice(i-n+1,i+1),m=w.reduce((s,v)=>s+v)/n,sd=Math.sqrt(w.reduce((s,v)=>s+(v-m)**2,0)/n);mid.push(m);up.push(m+2*sd);lo.push(m-2*sd)});return{mid,up,lo}},
+ swings(C,k=3){const s=[];for(let i=k;i<C.length-k;i++){let H=1,L=1;for(let j=1;j<=k;j++){if(C[i].h<=C[i-j].h||C[i].h<=C[i+j].h)H=0;if(C[i].l>=C[i-j].l||C[i].l>=C[i+j].l)L=0}
+  if(H)s.push({i,type:'H',p:C[i].h,conf:i+k});if(L)s.push({i,type:'L',p:C[i].l,conf:i+k})}return s.sort((a,b)=>a.conf-b.conf)}};
+
+/* ============ MARKET STRUCTURE ============ */
+function analyze(C){const c=C.map(x=>x.c),A={C,c};
+ A.e={20:I.ema(c,20),50:I.ema(c,50),100:I.ema(c,100),200:I.ema(c,200)};A.rsi=I.rsi(c);A.m=I.macd(c);Object.assign(A,I.atrAdx(C));A.bb=I.bb(c);A.sw=I.swings(C);
+ const ev=[],tr=Array(C.length).fill(0);let t=0,lH=null,lL=null,k=0;
+ for(let i=0;i<C.length;i++){while(k<A.sw.length&&A.sw[k].conf<=i){const s=A.sw[k++];if(s.type==='H')lH={...s,br:0};else lL={...s,br:0}}
+  if(lH&&!lH.br&&c[i]>lH.p){lH.br=1;ev.push({i,dir:1,kind:t===1||t===0?'BOS':'CHOCH',p:lH.p,si:lH.i});t=1}
+  else if(lL&&!lL.br&&c[i]<lL.p){lL.br=1;ev.push({i,dir:-1,kind:t===-1||t===0?'BOS':'CHOCH',p:lL.p,si:lL.i});t=-1}tr[i]=t}
+ A.ev=ev;A.tr=tr;
+ A.sr=i=>{const tol=(A.atr[i]||c[i]*.001)*.6,o=[];for(const p of A.sw.filter(x=>x.conf<=i).slice(-16).map(x=>x.p).sort((a,b)=>a-b)){const l=o[o.length-1];if(l&&p-l.p<=tol){l.p=(l.p*l.n+p)/(l.n+1);l.n++}else o.push({p,n:1})}return o};
+ A.fvg=[];for(let i=2;i<C.length;i++){const a=C[i-2],b=C[i];if(a.h<b.l)A.fvg.push({i:i-2,lo:a.h,hi:b.l,d:1});else if(a.l>b.h)A.fvg.push({i:i-2,lo:b.h,hi:a.l,d:-1})}
+ A.fvgOpen=A.fvg.filter(g=>!C.slice(g.i+3).some(x=>g.d>0?x.l<g.lo:x.h>g.hi)).slice(-4);
+ const L=C.length-1,at=A.atr[L]||0,sh=A.sw.filter(x=>x.type==='H'),sl=A.sw.filter(x=>x.type==='L');
+ A.eq=[];for(const arr of[sh.slice(-8),sl.slice(-8)])for(let x=0;x<arr.length;x++)for(let y=x+1;y<arr.length;y++)if(Math.abs(arr[x].p-arr[y].p)<.15*at)A.eq.push({p:(arr[x].p+arr[y].p)/2,type:arr[x].type});
+ const H=sh[sh.length-1],Lw=sl[sl.length-1];
+ A.supply=H?{lo:Math.max(C[H.i].o,C[H.i].c),hi:H.p,i:H.i}:null;A.demand=Lw?{lo:Lw.p,hi:Math.min(C[Lw.i].o,C[Lw.i].c),i:Lw.i}:null;
+ return A}
+
+/* ============ SIGNAL / CONFLUENCE ENGINE ============ */
+function score(A,i){const {C,c,e}=A,p=c[i],F=[],push=(n,w,v,t)=>F.push({n,w,v,t});
+ push('Structure',2,A.tr[i],A.tr[i]>0?'Bullish, last break was up':A.tr[i]<0?'Bearish, last break was down':'No confirmed structure');
+ let s=0;[[20,50],[50,100],[100,200]].forEach(([a,b])=>s+=Math.sign(e[a][i]-e[b][i]));s+=Math.sign(p-e[20][i]);
+ push('EMA alignment',1.5,s/4,s>=3?'Bullish stack, price above EMA20':s<=-3?'Bearish stack, price below EMA20':'Mixed or tangled EMAs');
+ const r=A.rsi[i];push('RSI',1,r>50?(r>70?-.25:.5):(r<30?.25:-.5),'RSI '+r.toFixed(0)+(r>70?' overbought':r<30?' oversold':r>50?', bullish momentum':', bearish momentum'));
+ const h=A.m.h[i],hp=A.m.h[i-1];push('MACD',1,h>0?(h>hp?1:.4):(h<hp?-1:-.4),(h>0?'Histogram positive':'Histogram negative')+((h>hp)===(h>0)?', strengthening':', fading'));
+ const ad=A.adx[i];push('ADX',1,ad>=25?Math.sign(A.tr[i]):0,'ADX '+(ad?ad.toFixed(0):'–')+(ad>=25?', trending':ad>=18?', developing':', weak/ranging'));
+ const lv=A.sr(i),at=A.atr[i],sup=lv.filter(x=>x.p<=p).pop(),res=lv.find(x=>x.p>p),nS=sup&&p-sup.p<.8*at,nR=res&&res.p-p<.8*at;
+ push('Location',1,nS&&!nR?.8:nR&&!nS?-.8:0,nS&&nR?'Squeezed between levels':nS?'Near support '+f(sup.p):nR?'Near resistance '+f(res.p):'Mid-range, no nearby level');
+ const b=A.bb,pos=(p-b.mid[i])/((b.up[i]-b.mid[i])||1e-9);push('Bollinger',1,pos>1?-.25:pos>0?.5:pos<-1?.25:-.5,pos>1?'Above upper band (stretched)':pos>0?'Above midline':pos<-1?'Below lower band (stretched)':'Below midline');
+ const k=C[i],q=C[i-1],bd=Math.abs(k.c-k.o),rg=k.h-k.l||1e-9;let cp=0,ct='No notable pattern';
+ if(k.c>k.o&&q.c<q.o&&k.c>q.o&&k.o<q.c){cp=1;ct='Bullish engulfing'}else if(k.c<k.o&&q.c>q.o&&k.c<q.o&&k.o>q.c){cp=-1;ct='Bearish engulfing'}
+ else if(bd<rg*.3&&Math.min(k.o,k.c)-k.l>rg*.6){cp=1;ct='Bullish pin bar'}else if(bd<rg*.3&&k.h-Math.max(k.o,k.c)>rg*.6){cp=-1;ct='Bearish pin bar'}else if(bd<rg*.1)ct='Doji (indecision)';
+ push('Candle pattern',.75,cp,ct);
+ const S=F.reduce((a,x)=>a+x.w*x.v,0),d=S>0?1:-1,ag=F.filter(x=>Math.sign(x.v)===d).length;return{S,d,ag,F}}
+const stopRaw=(A,i,d)=>{const s=A.sw.filter(x=>x.conf<=i&&x.type===(d>0?'L':'H')).pop(),at=A.atr[i];return s?Math.abs(A.c[i]-s.p)+.5*at:2*at};
+const biasOf=X=>{if(!X)return null;const n=X.c.length-1;return Math.sign(X.tr[n]+Math.sign(X.e[50][n]-X.e[200][n]))};
+
+function decide(){const A=st.a,L=A.C.length-1,p=A.c[L],at=A.atr[L],ad=A.adx[L],{S,d,ag,F}=score(A,L),W=[],warn=[];
+ const known=['1d','4h'].map(t=>biasOf(st.all[t])).filter(x=>x!==null);
+ const htf=known.length?(known.some(x=>x>0)&&known.some(x=>x<0)?0:Math.sign(known.reduce((a,b)=>a+b))):null;
+ if(htf===null)W.push('Higher-timeframe data is not loaded, so bias cannot be confirmed');else if(htf===0)W.push('Daily/4h bias is neutral or conflicting');else if(htf!==d)W.push('Direction opposes the higher-timeframe bias');
+ if(Math.abs(S)<3.5)W.push('Confluence score '+Math.abs(S).toFixed(1)+' is below the 3.5 minimum');
+ if(ag<5)W.push('Only '+ag+' of 8 factors agree (5 needed)');if(!(ad>=18))W.push('ADX under 18: market is ranging');
+ const raw=stopRaw(A,L,d),dist=Math.max(raw,at),lv=A.sr(L),nxt=d>0?lv.find(x=>x.p>p+.1*at):lv.filter(x=>x.p<p-.1*at).pop(),ratio=nxt?Math.abs(nxt.p-p)/dist:null;
+ const av=A.atr.slice(-100).filter(x=>x),vm=av.reduce((a,b)=>a+b)/av.length;
+ if(ratio!==null&&ratio<1)W.push('Nearest opposing level '+f(nxt.p)+' leaves under 1R of room');else if(ratio!==null&&ratio<1.5)warn.push('Opposing level '+f(nxt.p)+' sits before TP1: risk/reward is poor');
+ if(at>2*vm)W.push('Volatility is more than 2x its recent average');else if(at>1.5*vm)warn.push('Volatility is unusually high ('+(at/vm).toFixed(1)+'x average)');
+ if(raw>3*at)warn.push('Stop is unusually wide ('+(raw/at).toFixed(1)+' ATR)');
+ if(F.filter(x=>Math.sign(x.v)===-d&&Math.abs(x.v)>=.5).length>=3)warn.push('Major conflicting signals: 3+ factors point the other way');
+ const stale=st.manual[st.tf]&&Date.now()-A.C[L].t>3*MIN[st.tf]*6e4;if(stale)warn.push('Data looks stale: last candle is '+new Date(A.C[L].t).toLocaleString());
+ const nw=newsCheck();if(nw.push)warn.push(nw.msg);if(nw.block)W.push(nw.msg);
+ const v=W.length?'WAIT':d>0?'LONG':'SHORT',R=[1.5,2.5,4],e20=A.e[20][L],sl=p-d*dist;
+ const conf=Math.min(90,Math.round(ag/8*50+Math.min(Math.abs(S)/9.25,1)*35+(htf===d?15:0)));
+ const lastH=A.sw.filter(x=>x.type==='H').pop(),lastL=A.sw.filter(x=>x.type==='L').pop(),rs=lv.find(x=>x.p>p),sp=lv.filter(x=>x.p<p).pop();
+ const setup=v==='WAIT'?null:{d,zone:d>0?[p-.25*at,p]:[p,p+.25*at],sl,tp:R.map(m=>p+d*dist*m),dist,rr:[1.5,2.5,4],conf,risk:conf>=75?1:conf>=60?.75:.5,
+  cond:d>0?'Price holds above '+f(sl)+' and a '+st.tf+' candle closes back above EMA20 ('+f(e20)+') inside the entry zone':'Price holds below '+f(sl)+' and a '+st.tf+' candle closes back below EMA20 ('+f(e20)+') inside the entry zone',
+  inv:'A '+st.tf+' candle closes '+(d>0?'below ':'above ')+f(sl)};
+ return{v,d,S,ag,F,htf,W,warn,setup,conf,p,at,eq:A.eq,
+  bull:'A '+st.tf+' close above '+(rs?f(rs.p):lastH?f(lastH.p):'the last swing high')+' with MACD histogram positive opens the way higher. Invalid on a close below '+(lastL?f(lastL.p):'the last swing low')+'.',
+  bear:'A '+st.tf+' close below '+(sp?f(sp.p):lastL?f(lastL.p):'the last swing low')+' with MACD histogram negative opens the way lower. Invalid on a close above '+(lastH?f(lastH.p):'the last swing high')+'.'}}
+
+/* ============ NEWS / CALENDAR (manual entries) ============ */
+function newsCheck(){const now=Date.now(),ev=st.news;if(!ev.length)return{push:true,msg:'News risk unknown: no events entered for this pair\u2019s currencies',block:false};
+ const ccy=[st.pair.slice(0,3),st.pair.slice(3,6)];
+ const rel=ev.filter(e=>ccy.includes(e.ccy)).map(e=>({...e,dh:(e.t-now)/36e5})).sort((a,b)=>Math.abs(a.dh)-Math.abs(b.dh));
+ if(!rel.length)return{push:true,msg:'No entered events involve '+ccy.join(' or ')+'; risk still unknown for this pair',block:false};
+ const near=rel.find(e=>e.imp==='H'&&Math.abs(e.dh)<=2);
+ if(near)return{push:true,block:Math.abs(near.dh)<=.5,msg:'High-impact '+near.ccy+' event "'+near.name+'" '+(near.dh>0?'in '+near.dh.toFixed(1)+'h':Math.abs(near.dh).toFixed(1)+'h ago')+(Math.abs(near.dh)<=.5?' — inside the no-trade window':' — expect volatility')};
+ const nextH=rel.find(e=>e.imp==='H'&&e.dh>0);
+ if(nextH)return{push:true,msg:'Next high-impact event: '+nextH.ccy+' "'+nextH.name+'" in '+nextH.dh.toFixed(1)+'h',block:false};
+ return{push:false,msg:'No high-impact '+ccy.join('/')+' events flagged nearby',block:false}}
+function newsRender(){const now=Date.now();$('#newsList').innerHTML=st.news.length?'<table><tr><th>When</th><th>Ccy</th><th>Event</th><th>Impact</th></tr>'+
+  st.news.slice().sort((a,b)=>a.t-b.t).map(e=>'<tr><td>'+new Date(e.t).toLocaleString()+'</td><td>'+esc(e.ccy)+'</td><td>'+esc(e.name)+'</td><td class="'+(e.imp==='H'?'dn':'mu')+'">'+e.imp+'</td></tr>').join('')+'</table>':'<span class="mu">No events saved.</span>';
+ const r=newsCheck();$('#newsStat').className=r.block?'warn':'warn';$('#newsStat').textContent=r.msg}
+
+/* ============ BACKTEST ============ */
+function backtest(A){const T=[];let i=205;const L=A.C.length;
+ while(i<L-2){const {S,d,ag}=score(A,i),at=A.atr[i],ad=A.adx[i];
+  if(Math.abs(S)>=3.5&&ag>=5&&ad>=18&&stopRaw(A,i,d)<=3*at){const en=A.C[i+1].o,dist=Math.max(stopRaw(A,i,d),at),sl=en-d*dist,tp=en+d*dist*2.5;let R=null,j=i+1;
+   for(;j<Math.min(i+61,L);j++){const x=A.C[j];if(d>0?x.l<=sl:x.h>=sl){R=-1;break}if(d>0?x.h>=tp:x.l<=tp){R=2.5;break}}
+   if(R===null){j=Math.min(i+60,L-1);R=(A.c[j]-en)/dist*d}T.push({R,trend:ad>=25});i=j+1}else i++}
+ return T}
+function stats(T){if(!T.length)return null;const w=T.filter(t=>t.R>0),l=T.filter(t=>t.R<=0),sum=a=>a.reduce((s,t)=>s+t.R,0);let eq=0,pk=0,dd=0,cl=0,mc=0;
+ for(const t of T){eq+=t.R;pk=Math.max(pk,eq);dd=Math.max(dd,pk-eq);if(t.R<=0){cl++;mc=Math.max(mc,cl)}else cl=0}
+ return{n:T.length,wr:w.length/T.length*100,aw:w.length?sum(w)/w.length:0,al:l.length?sum(l)/l.length:0,pf:l.length&&sum(l)?sum(w)/-sum(l):null,dd,ex:sum(T)/T.length,mc}}
+
+/* ============ RISK MANAGEMENT ============ */
+function risk(){const b=+$('#bal').value,rp0=+$('#rp').value,rp=Math.min(rp0,5),sl=+$('#slp').value,pv=+$('#pv').value,lev=+$('#lev').value,o=[];
+ if(!(b>0&&rp>0&&sl>0&&pv>0&&lev>0)){$('#rout').innerHTML='<div class="warn">Enter positive values in every field.</div>';return}
+ const amt=b*rp/100,lots=amt/(sl*pv),p=st.a?st.a.c[st.a.c.length-1]:PAIRS[st.pair],margin=lots*1e5*(st.pair.startsWith('USD')?1:p)/lev;
+ if(rp0>5)o.push('Risk capped at 5% (you entered '+rp0+'%).');if(rp>2)o.push('Risk above 2% per trade is aggressive.');
+ if(st.a&&sl*pipS()>3*st.a.atr[st.a.c.length-1])o.push('Stop is wider than 3 ATR.');if(margin>b*.5)o.push('Margin uses over half the account (approx.).');
+ $('#rout').innerHTML='<table><tr><td>Amount at risk</td><td class="n">$'+amt.toFixed(2)+'</td></tr><tr><td>Position size</td><td class="n">'+lots.toFixed(2)+' lots ('+Math.round(lots*1e5).toLocaleString()+' units)</td></tr><tr><td>Approx. margin</td><td class="n">$'+margin.toFixed(0)+'</td></tr></table>'+o.map(x=>'<div class="warn">'+x+'</div>').join('')+'<small>Pip value assumes a USD account; adjust for your pair and broker.</small>'}
+
+/* ============ CHART RENDERING ============ */
+function draw(){const A=st.a;if(!A)return;const cv=$('#chart'),x=cv.getContext('2d'),dp=devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;cv.width=W*dp;cv.height=H*dp;x.setTransform(dp,0,0,dp,0,0);
+ const cs=getComputedStyle(document.documentElement),g=n=>cs.getPropertyValue(n).trim(),N=Math.min(+$('#bars').value,A.C.length),L=A.C.length,s0=L-N,vis=A.C.slice(s0),S=st.res&&st.res.setup;
+ let hi=Math.max(...vis.map(v=>v.h)),lo=Math.min(...vis.map(v=>v.l));if(S){hi=Math.max(hi,S.tp[0],S.sl);lo=Math.min(lo,S.tp[0],S.sl)}const pd=(hi-lo)*.05;hi+=pd;lo-=pd;
+ const cw=(W-72)/N,X=k=>6+(k+.5)*cw,Y=p=>8+(hi-p)/(hi-lo)*(H-16),up=g('--up'),dn=g('--dn'),tx=g('--tx'),mu=g('--mu'),ln=g('--ln');
+ x.font='11px ui-monospace,monospace';x.lineWidth=1;x.fillStyle=mu;x.strokeStyle=ln;
+ for(let k=0;k<=5;k++){const p=lo+(hi-lo)*k/5,y=Y(p);x.beginPath();x.moveTo(0,y);x.lineTo(W-64,y);x.stroke();x.fillText(f(p),W-62,y+4)}
+ const line=(arr,col,dash)=>{x.beginPath();x.strokeStyle=col;x.setLineDash(dash);let s=0;for(let k=0;k<N;k++){const v=arr[s0+k];if(v==null)continue;s?x.lineTo(X(k),Y(v)):x.moveTo(X(k),Y(v));s=1}x.stroke();x.setLineDash([])};
+ const hl=(p,col,lab,dash,x0=0)=>{x.strokeStyle=col;x.fillStyle=col;x.setLineDash(dash);x.beginPath();x.moveTo(x0,Y(p));x.lineTo(W-64,Y(p));x.stroke();x.setLineDash([]);x.fillText(lab,x0+4,Y(p)-3)};
+ if($('#oF').checked){const box=(z,col,lab)=>{if(!z)return;const x0=Math.max(0,X(z.i-s0));x.fillStyle=col+'33';x.fillRect(x0,Y(z.hi),W-64-x0,Y(z.lo)-Y(z.hi));x.fillStyle=col;x.fillText(lab,W-190,Y(z.hi)+11)};
+  box(A.supply,dn,'supply zone (approx.)');box(A.demand,up,'demand zone (approx.)');A.fvgOpen.forEach(z=>box(z,z.d>0?up:dn,'FVG'));
+  (st.res?st.res.eq:[]).forEach(q=>hl(q.p,mu,'equal '+(q.type==='H'?'highs':'lows')+' (liquidity)',[2,3]))}
+ if($('#oS').checked)A.sr(L-1).filter(q=>q.p>lo&&q.p<hi).forEach(q=>hl(q.p,mu,(q.p<A.c[L-1]?'S':'R')+' x'+q.n,[6,4]));
+ if($('#oB').checked){line(A.bb.up,mu,[3,3]);line(A.bb.lo,mu,[3,3]);line(A.bb.mid,mu,[1,3])}
+ if($('#oE').checked){line(A.e[20],tx,[]);line(A.e[50],'#e3b341',[6,3]);line(A.e[200],'#a78bfa',[2,3])}
+ vis.forEach((v,k)=>{const c=v.c>=v.o?up:dn,xx=X(k),bw=Math.max(1,cw*.6);x.strokeStyle=c;x.beginPath();x.moveTo(xx,Y(v.h));x.lineTo(xx,Y(v.l));x.stroke();
+  const y1=Y(Math.max(v.o,v.c)),hh=Math.max(1,Math.abs(Y(v.o)-Y(v.c)));if(v.c>=v.o){x.fillStyle=g('--sf');x.fillRect(xx-bw/2,y1,bw,hh);x.strokeRect(xx-bw/2,y1,bw,hh)}else{x.fillStyle=c;x.fillRect(xx-bw/2,y1,bw,hh)}});
+ if($('#oM').checked)A.ev.filter(v=>v.i>=s0&&v.p>lo&&v.p<hi).forEach(v=>{x.strokeStyle=v.dir>0?up:dn;x.fillStyle=x.strokeStyle;x.setLineDash([2,2]);x.beginPath();x.moveTo(X(Math.max(0,v.si-s0)),Y(v.p));x.lineTo(X(v.i-s0),Y(v.p));x.stroke();x.setLineDash([]);x.fillText(v.kind+(v.dir>0?'▲':'▼'),X(v.i-s0)-14,Y(v.p)+(v.dir>0?-4:12))});
+ if(S){x.fillStyle=(S.d>0?up:dn)+'22';x.fillRect(0,Y(S.zone[1]),W-64,Y(S.zone[0])-Y(S.zone[1]));const col=S.d>0?up:dn;hl(S.zone[S.d>0?1:0],col,'ENTRY',[]);hl(S.sl,dn,'SL',[4,3],60);S.tp.forEach((t,k)=>hl(t,up,'TP'+(k+1),[4,3],60+k*40))}}
+
+/* ============ UI COMPONENTS ============ */
+function render(){const R=st.res,A=st.a,S=R.setup,vl={LONG:['L','▲ LONG CANDIDATE'],SHORT:['S','▼ SHORT CANDIDATE'],WAIT:['W','⏸ NO TRADE']}[R.v];
+ let h='<h2>Decision</h2><div class="v '+vl[0]+'">'+vl[1]+'</div><p class="mu">Price <span class="num">'+f(R.p)+'</span> · ATR <span class="num">'+f(R.at)+'</span> · '+st.pair+' '+st.tf+'</p>';
+ if(S){const band=agreementBand(S.conf);
+ h+='<table><tr><td>Entry zone</td><td class="n">'+f(S.zone[0])+' – '+f(S.zone[1])+'</td></tr><tr><td>Stop-loss</td><td class="n">'+f(S.sl)+'</td></tr>'+S.tp.map((t,k)=>'<tr><td>Take-profit '+(k+1)+'</td><td class="n">'+f(t)+' (1:'+S.rr[k]+')</td></tr>').join('')+
+  '<tr><td>Risk/reward</td><td class="n">1:'+S.rr[1]+' to TP2</td></tr><tr><td>Suggested risk</td><td class="n">'+S.risk+'% of equity</td></tr><tr><td>Agreement level</td><td class="n '+band.cls+'"><b>'+band.label+'</b></td></tr></table>'+
+  '<p><b>This is a count of agreeing technical factors, not a win probability or a guarantee.</b></p>'+
+  '<p><b>Before entry:</b> '+S.cond+'.</p><p><b>Invalidated if:</b> '+S.inv+'.</p>'}
+ else h+='<p><b>Why no trade:</b></p><ul>'+R.W.map(w=>'<li>'+w+'</li>').join('')+'</ul>';
+ h+=R.warn.map(w=>'<div class="warn">⚠ '+w+'</div>').join('');$('#decision').innerHTML=h;
+ $('#why').innerHTML='<div class="f">'+R.F.map(x=>'<span class="'+cls(x.v)+'">'+(x.v>0?'▲':x.v<0?'▼':'■')+' '+x.n+'</span><span>'+x.t+'</span>').join('')+'<b>HTF bias</b><span class="'+cls(R.htf)+'">'+(R.htf===null?'Not loaded':sym(R.htf))+'</span><b>Overall</b><span><b>'+vl[1]+'</b> (score '+R.S.toFixed(1)+', '+R.ag+'/8 agree)</span></div>'+
+  '<p><b>Reasons this could fail…</b></p><ul>'+(R.F.filter(x=>Math.sign(x.v)===-R.d&&x.v).map(x=>'<li>'+x.n+' leans the other way: '+x.t+'</li>').concat(R.W,['Stop-hunts beyond obvious highs/lows can trigger the stop before the move','A high-impact news release can override any technical setup'])).map(z=>'<li>'+z+'</li>').join('').replace(/^/,'')+'</ul>';
+ $('#scen').innerHTML='<p><b class="up">▲ Bullish:</b> '+R.bull+'</p><p><b class="dn">▼ Bearish:</b> '+R.bear+'</p>';
+ const srcLbl={live:'\ud83d\udfe2 live',csv:'\ud83d\udcc4 imported',sim:'\u26aa simulated'};
+ $('#mtf').innerHTML='<table><tr><th>TF</th><th>Source</th><th>Structure</th><th>EMA50/200</th><th>RSI</th><th>ADX</th><th>Role</th></tr>'+TFS.map(t=>{const X=st.all[t];const src=srcLbl[st.src[t]]||'\u26aa simulated';if(!X)return'<tr><td>'+t+'</td><td>'+src+'</td><td colspan=4 class="mu">no data</td></tr>';const n=X.c.length-1,role=t==='1d'||t==='4h'?'Higher TF':t==='1h'?'Intermediate':t===st.tf?'Entry TF':'';
+  return'<tr><td>'+t+'</td><td>'+src+'</td><td class="'+cls(X.tr[n])+'">'+sym(X.tr[n])+'</td><td class="'+cls(X.e[50][n]-X.e[200][n])+'">'+(X.e[50][n]>X.e[200][n]?'50 > 200':'50 < 200')+'</td><td class="n">'+(X.rsi[n]||0).toFixed(0)+'</td><td class="n">'+(X.adx[n]||0).toFixed(0)+'</td><td>'+role+'</td></tr>'}).join('')+'</table><small>Position: '+(A.c[A.c.length-1]>A.e[200][A.c.length-1]?'above':'below')+' EMA200 on the entry timeframe.</small>';
+ if(S)$('#slp').value=Math.max(1,Math.round(S.dist/pipS()));risk();draw()}
+function hist(){const H=store.get('hist',[]);$('#hl').innerHTML=H.length?'<table>'+H.slice(0,12).map(h=>'<tr><td>'+new Date(h.t).toLocaleTimeString()+'</td><td>'+h.pair+' '+h.tf+'</td><td>'+h.v+'</td><td class="n">'+h.p+'</td><td class="mu">'+h.src+'</td></tr>').join('')+'</table>':'<span class="mu">No analyses yet.</span>'}
+function journal(){const J=store.get('jrn',[]);$('#jl').innerHTML=J.slice(0,8).map(j=>'<div class="warn"><b>'+esc(j.pair)+'</b> '+new Date(j.t).toLocaleString()+'<br>'+esc(j.n)+'</div>').join('')}
+function badge(){const n=Object.keys(st.manual).length,vals=Object.values(st.src),live=vals.filter(v=>v==='live').length,sim=vals.filter(v=>v==='sim').length;
+ $('#badge').textContent=live?live+'/6 live, '+n+'/6 imported, '+sim+'/6 simulated':(n?n+'/6 timeframes imported, rest SIMULATED':'SIMULATED demo data – not real prices');
+ $('#csvStat').innerHTML=n?'Imported: '+Object.keys(st.manual).map(t=>t+' ('+st.manual[t].length+' bars)').join(', '):'<span class="mu">No timeframes imported yet.</span>'}
+
+/* ============ CONTROLLER ============ */
+async function run(){
+ try{
+ const all={};st.liveErr={};for(const t of TFS){const C=await Data.get(st.pair,t);all[t]=C&&C.length>=210?analyze(C):null}
+ if(st.live){const errs=Object.entries(st.liveErr);$('#liveStat').innerHTML=errs.length?errs.map(([t,m])=>'<div>'+t+': '+esc(m)+'</div>').join(''):'Live Twelve Data prices in use.';$('#liveStat').className=errs.length?'warn':'warn'}
+ st.all=all;st.a=all[st.tf];if(!st.a){$('#decision').innerHTML='<h2>Decision</h2><div class="warn">Need at least 210 candles for '+st.tf+'.</div>';return}
+ st.res=decide();st.stamp=new Date();$('#stamp').textContent='Data updated '+st.stamp.toLocaleString()+(st.manual[st.tf]?'':' (simulated)');badge();render();
+ const H=store.get('hist',[]);H.unshift({t:Date.now(),pair:st.pair,tf:st.tf,v:st.res.v,p:f(st.res.p),src:st.manual[st.tf]?'csv':'sim'});store.set('hist',H.slice(0,50));hist();
+ }catch(err){
+  // Error boundary: a malformed import, a divide-by-zero from bad data, or
+  // any other unexpected failure must never leave a blank or frozen page
+  // with no explanation (fix for audit UX-4). Surface it plainly instead.
+  console.error('Analysis pipeline failed:', err);
+  $('#decision').innerHTML='<h2>Decision</h2><div class="v W">\u26a0 ANALYSIS FAILED</div>'+
+   '<div class="warn">The analysis could not complete: '+esc(err&&err.message?err.message:String(err))+
+   '</div><p class="mu">This is usually bad or malformed data (a manual import, a pair/timeframe with too little history). '+
+   'No candidate is shown because none could be safely computed \u2014 check your inputs and try Analyze again.</p>';
+  $('#why').innerHTML='';$('#scen').innerHTML='';$('#mtf').innerHTML='<span class="mu">Unavailable after an analysis error.</span>';
+ }
+}
+$('#pair').innerHTML=Object.keys(PAIRS).map(p=>'<option>'+p+'</option>').join('');$('#tf').innerHTML=TFS.map(t=>'<option'+(t==='15m'?' selected':'')+'>'+t+'</option>').join('');
+$('#pair').onchange=e=>{st.pair=e.target.value;run()};$('#tf').onchange=e=>{st.tf=e.target.value;run()};$('#go').onclick=run;
+$('#reseed').onclick=()=>{st.seed++;run()};['oE','oB','oS','oM','oF','bars'].forEach(i=>$('#'+i).onchange=draw);
+['bal','rp','slp','pv','lev'].forEach(i=>$('#'+i).oninput=risk);addEventListener('resize',draw);
+$('#csvTf').innerHTML=TFS.map(t=>'<option'+(t===st.tf?' selected':'')+'>'+t+'</option>').join('');
+$('#csvBulk').onchange=e=>{$('#csvHelp').innerHTML=e.target.checked
+ ?'Mark each block with the timeframe first, e.g. <code>#1h</code>, then its candles below it, then <code>#4h</code>, and so on.'
+ :'One candle per line: <code>time,open,high,low,close</code>.';$('#csvTf').closest('label').style.display=e.target.checked?'none':''};
+$('#lc').onclick=()=>{if($('#csvBulk').checked){const secs=Data.parseBulk($('#csv').value),ok=[],short=[];
+  for(const t in secs){if(secs[t].length>=210){st.manual[t]=secs[t];ok.push(t)}else short.push(t+' ('+secs[t].length+')')}
+  if(!ok.length){alert('No timeframe had at least 210 candles. Use headers like #1h above each block.');return}
+  if(short.length)alert('Loaded: '+ok.join(', ')+'. Skipped (need \u2265210 bars): '+short.join(', '));
+  if(ok.includes(st.tf)||true)run()}
+ else{const c=Data.parseCSV($('#csv').value);if(c.length<210){alert('Need at least 210 valid rows (time,open,high,low,close). Found '+c.length+'.');return}
+  st.manual[$('#csvTf').value]=c;run()}};
+$('#ud').onclick=()=>{st.manual={};run()};
+$('#js').onclick=()=>{const n=$('#jn').value.trim();if(!n)return;const J=store.get('jrn',[]);J.unshift({t:Date.now(),pair:st.pair,n});store.set('jrn',J.slice(0,50));$('#jn').value='';journal()};
+$('#newsSave').onclick=()=>{const rows=[],bad=[];for(const ln of $('#newsIn').value.trim().split(/\r?\n/)){const t=ln.trim();if(!t)continue;
+  const c=t.split(',').map(x=>x.trim());if(c.length<4){bad.push(t);continue}const [ts,ccy,...rest]=c,imp=(rest.pop()||'').toUpperCase(),name=rest.join(',');
+  const tm=Date.parse(ts);if(isNaN(tm)||!/^[A-Z]{3}$/.test(ccy)||!['H','M','L'].includes(imp)){bad.push(t);continue}rows.push({t:tm,ccy,name:name||'Event',imp})}
+ if(bad.length)alert('Skipped '+bad.length+' line(s) not in time,currency,event,impact format.');
+ st.news=rows.concat(st.news.filter(e=>!rows.some(r=>r.t===e.t&&r.ccy===e.ccy&&r.name===e.name)));store.set('news',st.news);$('#newsIn').value='';newsRender();if(st.res){st.res=decide();render()}};
+$('#bt').onclick=()=>{if(!st.a)return;const T=backtest(st.a),s=stats(T);if(!s){$('#btout').innerHTML='<p class="mu">No qualifying trades in this sample.</p>';return}
+ const sub=k=>{const q=stats(T.filter(t=>t.trend===k));return q?q.n+' trades, '+q.wr.toFixed(0)+'% win, exp '+q.ex.toFixed(2)+'R':'none'};
+ $('#btout').innerHTML='<table><tr><td>Trades</td><td class="n">'+s.n+'</td></tr><tr><td>Win rate</td><td class="n">'+s.wr.toFixed(1)+'%</td></tr><tr><td>Avg win / loss</td><td class="n">+'+s.aw.toFixed(2)+'R / '+s.al.toFixed(2)+'R</td></tr><tr><td>Profit factor</td><td class="n">'+(s.pf?s.pf.toFixed(2):'n/a')+'</td></tr><tr><td>Expectancy</td><td class="n">'+s.ex.toFixed(2)+'R</td></tr><tr><td>Max drawdown</td><td class="n">'+s.dd.toFixed(1)+'R</td></tr><tr><td>Avg risk/reward</td><td class="n">1:2.5 target</td></tr><tr><td>Max consecutive losses</td><td class="n">'+s.mc+'</td></tr><tr><td>Trending (ADX≥25)</td><td>'+sub(true)+'</td></tr><tr><td>Ranging (ADX&lt;25)</td><td>'+sub(false)+'</td></tr></table><small>Entry-timeframe rules only (no HTF filter), SL first if both hit, 60-bar timeout, no spread or slippage. '+(st.manual[st.tf]?'':'Run on simulated data: meaningless as evidence of edge. ')+'History does not guarantee future results.</small>'};
+/* ============ CHART SCREENSHOT CROSS-CHECK (sample capability) ============ */
+(async()=>{const gate=$('#ssGate'),body=$('#ssBody');
+ try{st.sample=await claude.use('sample')}catch(e){st.sample=null}
+ if(!st.sample){gate.textContent='Image analysis isn\u2019t available in this view.';return}
+ let lims=null;try{lims=await st.sample.limits()}catch(e){}
+ if(!lims||!lims.images){gate.textContent='This view can\u2019t send images to Claude yet.';return}
+ $('#ssFile').accept=lims.images.mediaTypes.join(',');gate.hidden=true;body.hidden=false})();
+$('#ssFile').onchange=()=>{const f0=$('#ssFile').files[0];$('#ssPrev').innerHTML=f0?'<small>'+esc(f0.name)+' ('+(f0.size/1024|0)+' KB)</small>':''};
+$('#ssGo').onclick=async()=>{const f0=$('#ssFile').files[0];if(!f0){alert('Choose a chart screenshot first.');return}
+ if(!st.sample){return}const out=$('#ssOut'),btn=$('#ssGo');btn.disabled=true;out.innerHTML='<p class="mu">Thinking…</p>';
+ const R=st.res,ctl=new AbortController();
+ const summary=R?('Computed read for '+st.pair+' '+st.tf+': '+R.v+(R.setup?(' direction '+(R.setup.d>0?'long':'short')):'')+
+   ', confluence score '+R.S.toFixed(1)+' with '+R.ag+'/8 factors agreeing, structure '+sym(st.a.tr[st.a.c.length-1])+', RSI '+st.a.rsi[st.a.c.length-1].toFixed(0)+
+   ', ADX '+(st.a.adx[st.a.c.length-1]||0).toFixed(0)+'.'):'No computed analysis is available yet.';
+ const prompt='You are looking at a screenshot of a trading chart. In plain language: 1) state the visible trend direction and any obvious structure (higher highs/lows, ranges, channels); 2) name any candlestick or chart patterns you can actually see; 3) note any indicators visibly plotted and what they show. Then compare your visual read against this computed technical summary and say whether they agree, partly agree, or conflict, in 5-8 short sentences total. Do not invent price levels you cannot read from the image.\n\n'+summary;
+ try{const {text}=await st.sample(prompt,{images:[f0],modelTier:'default',cache:false,signal:ctl.signal,onText:({text})=>{out.textContent=text}});out.textContent=text}
+ catch(e){const m={not_granted:'You declined image analysis for this page.',images_unavailable:'This view can\u2019t send images.',image_rejected:'That file couldn\u2019t be read — try a PNG/JPEG screenshot.',rate_limited:'Too many requests right now — try again shortly.',refused:'Claude declined to analyze this image.',empty_completion:'No answer came back — try again.',upstream_error:'A temporary error occurred — try again.'}[e.code]||('Error: '+e.message);
+  out.innerHTML='<div class="warn">'+m+'</div>'+(e.text?'<p>'+esc(e.text)+'</p>':'')}
+ finally{btn.disabled=false}};
+
+/* ============ LIVE DATA (Twelve Data via mcp capability) ============ */
+(async()=>{const tgl=$('#liveToggle');try{st.mcp=await claude.use('mcp')}catch(e){st.mcp=null}
+ if(!st.mcp){$('#liveStat').textContent='Live connector isn\u2019t available in this view. Using simulated/imported data.';return}
+ tgl.disabled=false;$('#liveStat').textContent='Live data ready \u2014 tick the box to pull real Twelve Data prices.'})();
+$('#liveToggle').onchange=async e=>{
+ if(e.target.checked){$('#liveStat').textContent='Checking Twelve Data connection\u2026';
+  try{const out=await st.mcp.callTool('Twelve Data','get_quote',{symbol:tdSymbol(st.pair)},{cache:{staleTime:0,gcTime:30000}});
+   if(!out||!out.payload){throw{code:'upstream_error',message:'empty response'}}
+   st.live=true;$('#liveStat').textContent='Connected \u2014 pulling live Twelve Data prices per timeframe.'}
+  catch(err){st.live=false;e.target.checked=false;$('#liveStat').textContent=mcpErrMsg(err);return}}
+ else{st.live=false;$('#liveStat').textContent='Live data off. Using imported/simulated data.'}
+ run()};
+
+st.news=store.get('news',[]);newsRender();
+$('#csvTf').closest('label').style.display='';
+hist();journal();badge();
+
+/* ============ FIRST-RUN RISK ACKNOWLEDGMENT (fix for audit RG-1) ============
+   No candidate/decision panel is shown until the person has dismissed this
+   once; the choice is then remembered per-browser via the existing store
+   helper (localStorage with an in-memory fallback, same as journal/history). */
+if(store.get('riskAck',false)){run()}
+else{$('#riskModal').style.display='flex';
+ $('#riskAckBtn').onclick=()=>{store.set('riskAck',true);$('#riskModal').style.display='none';run()};}
+</script></body></html>
